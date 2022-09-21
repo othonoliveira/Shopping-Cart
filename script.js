@@ -1,5 +1,8 @@
 const itemSection = document.querySelector('.items');
 const cartItems = document.querySelectorAll('.cart__items')[0];
+const cartPrice = document.querySelector('.total-price');
+const clearCartButton = document.querySelector('.empty-cart');
+const loadingMassage = document.querySelector('.loading');
 
 // Fique a vontade para modificar o código já escrito e criar suas próprias funções!
 
@@ -62,8 +65,18 @@ const getIdFromProductItem = (product) => product.querySelector('span.id').inner
  * @returns {Element} Elemento de um item do carrinho.
  */
 
+const getFullCartPrice = () => {
+  let result = 0;
+  for (let index = 0; index < cartItems.children.length; index += 1) {
+    const price = parseFloat(cartItems.children[index].innerText.split('PRICE: $')[1], 10);
+    result += price;
+  }
+  cartPrice.innerHTML = result.toFixed(2);
+};
+
  const cartItemClickListener = (element) => {
   element.target.remove();
+  getFullCartPrice();
 };
 
 const createCartItemElement = ({ id, title, price }) => {
@@ -80,6 +93,7 @@ const appendToCart = (product) => {
   const cartElement = createCartItemElement(product);
   appendItem(cartItems, cartElement);
   saveCartItems(cartItems.innerHTML);
+  getFullCartPrice();
 };
 
 const populateCart = async () => {
@@ -87,11 +101,13 @@ const populateCart = async () => {
   for (let index = 0; index < cartItems.children.length; index += 1) {
     cartItems.children[index].addEventListener('click', cartItemClickListener);
   }
+  getFullCartPrice();
 };
 
 const populateOptions = async (product) => {
   try {
     const response = await fetchProducts(product);
+    loadingMassage.remove();
     response.results.forEach((element) => {
       const itemElement = createProductItemElement(element);
       itemElement.lastChild.addEventListener('click', async () => {
@@ -104,6 +120,12 @@ const populateOptions = async (product) => {
     return error;
   }
 };
+
+clearCartButton.addEventListener('click', () => {
+  cartItems.innerHTML = '';
+  saveCartItems(cartItems.innerHTML);
+  getFullCartPrice();
+});
 
 window.onload = () => {
   populateOptions('computador');
