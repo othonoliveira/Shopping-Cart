@@ -1,5 +1,5 @@
-// Esse tipo de comentário que estão antes de todas as funções são chamados de JSdoc,
-// experimente passar o mouse sobre o nome das funções e verá que elas possuem descrições! 
+const itemSection = document.querySelector('.items');
+const cartItems = document.querySelectorAll('.cart__items')[0];
 
 // Fique a vontade para modificar o código já escrito e criar suas próprias funções!
 
@@ -37,15 +37,12 @@ const createCustomElement = (element, className, innerText) => {
  * @param {string} product.thumbnail - URL da imagem do produto.
  * @returns {Element} Elemento de produto.
  */
-const createProductItemElement = ({ id, title, thumbnail }) => {
+const createProductItemElement = ({ title, thumbnail }) => {
   const section = document.createElement('section');
   section.className = 'item';
-
-  section.appendChild(createCustomElement('span', 'item_id', id));
   section.appendChild(createCustomElement('span', 'item__title', title));
   section.appendChild(createProductImageElement(thumbnail));
   section.appendChild(createCustomElement('button', 'item__add', 'Adicionar ao carrinho!'));
-
   return section;
 };
 
@@ -64,6 +61,11 @@ const getIdFromProductItem = (product) => product.querySelector('span.id').inner
  * @param {string} product.price - Preço do produto.
  * @returns {Element} Elemento de um item do carrinho.
  */
+
+ const cartItemClickListener = (element) => {
+  element.target.remove();
+};
+
 const createCartItemElement = ({ id, title, price }) => {
   const li = document.createElement('li');
   li.className = 'cart__item';
@@ -72,4 +74,38 @@ const createCartItemElement = ({ id, title, price }) => {
   return li;
 };
 
-window.onload = () => { };
+const appendItem = (father, child) => father.appendChild(child);
+
+const appendToCart = (product) => {
+  const cartElement = createCartItemElement(product);
+  appendItem(cartItems, cartElement);
+  saveCartItems(cartItems.innerHTML);
+};
+
+const populateCart = async () => {
+  cartItems.innerHTML = await getSavedCartItems();
+  for (let index = 0; index < cartItems.children.length; index += 1) {
+    cartItems.children[index].addEventListener('click', cartItemClickListener);
+  }
+};
+
+const populateOptions = async (product) => {
+  try {
+    const response = await fetchProducts(product);
+    response.results.forEach((element) => {
+      const itemElement = createProductItemElement(element);
+      itemElement.lastChild.addEventListener('click', async () => {
+        const itemResponse = await fetchItem(element.id);
+        appendToCart(itemResponse);
+      });
+      appendItem(itemSection, itemElement);
+    });
+  } catch (error) {
+    return error;
+  }
+};
+
+window.onload = () => {
+  populateOptions('computador');
+  populateCart();
+};
